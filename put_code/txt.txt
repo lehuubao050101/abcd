@@ -1,0 +1,107 @@
+import cv2
+import numpy as np
+
+nPoints = 15
+POSE_PAIRS = [[0,1],[1,2],[2,3],[3,4],[1,5],[5,6],[6,7],[1,14],[14,8],[8,9],[9,10],[14,11],[11,12],[12,13]]
+
+protot = r'D:\machine_learning\detect_behavious\OpenPose_models\pose\mpi\pose_deploy_linevec_faster_4_stages.prototxt'
+caffe_model =r'D:\machine_learning\detect_behavious\OpenPose_models\pose\mpi\pose_iter_160000.caffemodel'
+
+#net = cv2.dmn.readNetFromCaffe(protot,caffe_model)
+net = cv2.dnn.readNetFromCaffe(protot,caffe_model)
+image_read = r'D:\machine_learning\detect_behavious\in.png'
+im  = cv2.imread(image_read)
+
+if im is not None and im.size > 0:
+    # Chuyển đổi từ BGR sang RGB
+    im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+else:
+    print("Hình ảnh không hợp lệ hoặc rỗng.")
+
+
+inwight = im.shape[1]
+inheight = im.shape[0]
+in2_image= r'D:\machine_learning\detect_behavious\in2.png'
+im2 = cv2.imread(in2_image)
+#from IPython.display import Image
+#Image(filename=out_image)
+
+#cv2.imshow('Image', im)
+#cv2.imshow('Im2', im2)
+  # Chờ người dùng nhấn một phím bất kỳ để đóng cửa sổ
+
+
+netInputSize = (368,368)
+inBlob = cv2.dnn.blobFromImage(im,1.0/225,netInputSize,(0,0,0),swapRB=True,crop=False)
+net.setInput(inBlob)
+
+output = net.forward()
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(20,5))
+for i in range(nPoints):
+    probMap= output[0,i,:,:]
+    displayMap = cv2.resize(probMap,(inwight,inheight),cv2.INTER_LINEAR)
+    plt.subplot(2,8,i+1); plt.axis('off');plt.imshow(displayMap,cmap='jet')
+
+#plt.tight_layout()  # Chỉnh sửa khoảng cách giữa các ô con
+#plt.show()  # Hiển thị lưới\
+
+scaleX = inwight/ output.shape[3]
+scaleY  = inheight/output.shape[2]
+
+points = []
+threshold = 0.1
+for i in range(nPoints):
+    probMap= output[0,i,:,:]
+    minVal,prob,minLoc,point = cv2.minMaxLoc(probMap)
+
+    x = scaleX*point[0]
+    y = scaleY*point[1]
+
+    if prob > threshold:
+        points.append((int(x),int(y)))
+    else:points.append(None)
+
+imPoints = im.copy()
+imSkeleton = im.copy()
+
+for i,p in enumerate(points):
+    cv2.circle(imPoints,p,8,(255,255,0),thickness= -1, lineType=cv2.FILLED)
+    cv2.putText(imPoints,"{}".format(i),p,cv2.FONT_HERSHEY_COMPLEX,1,(255,0,0),2,lineType=cv2.LINE_AA)
+
+
+for pair in  POSE_PAIRS:
+    partA = pair[0]
+    partB = pair[1]
+    if points[partA] and points[partB]:
+        cv2.line(imSkeleton,points[partA],points[partB],(255,255,0),2)
+        cv2.circle(imSkeleton,points[partA],8,(255,0,0),thickness=-1,lineType=cv2.FILLED)
+
+cv2.namedWindow('Image 1', cv2.WINDOW_NORMAL)
+cv2.namedWindow('Image 2', cv2.WINDOW_NORMAL)
+
+# Kích thước mới cho cửa sổ hiển thị
+new_width = 800
+new_height = 600
+
+# Thay đổi kích thước cửa sổ hiển thị
+cv2.resizeWindow('Image 1', new_width, new_height)
+cv2.resizeWindow('Image 2', new_width, new_height)
+
+cv2.imshow('Image 1', imPoints)
+cv2.imshow('Image 2', imSkeleton)
+'''
+plt.figure(figsize=(10, 5))
+
+plt.subplot(121)
+plt.axis('off')
+plt.imshow(imPoints)
+
+plt.subplot(122)
+plt.axis('off')
+plt.imshow(imSkeleton)
+'''
+cv2.waitKey()
+# Đóng tất cả các cửa sổ hiển thị
+cv2.destroyAllWindows()

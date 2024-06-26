@@ -1,0 +1,21 @@
+{"intents" :[
+
+
+    {"tag":    "greetings",
+    "patterns": ["hello", "hi","good day","greetings","what's up?","xin chào", "alo", "lô lô", "hey bro", "Thúi ơi","Thui","thúi"],
+    "responses": ["hello!","hey!","what i can do for u?"]
+},
+{"tag":    "goodbye",
+    "patterns": ["see u later", "goodbye","bye","see ya","im leaving","have a good day", "đi nhớ", "bái bai", "gặp sau"],
+    "responses": ["hello!","hey!","what i can do for u?"]
+},
+{"tag":    "age",
+    "patterns": ["how old?", "what is you age?","how old are you","age","nhieu tuoi","nhiêu tuổi đó ní","bạn bao nhiêu tuổi","nhiêu tuổi","tuổi"],
+    "responses": ["my own florian is 23 year old!","23","mới đẻ"]
+},
+{"tag":    "name",
+    "patterns": ["name?", "what is your name","what should i call you","your name","who are you?","tên gì?","tên?","ten","name"],
+    "responses": ["you can call me thúi","thúi ","i'm thúi the assistant of ABC"]
+}
+
+]}

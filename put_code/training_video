@@ -1,0 +1,63 @@
+import cv2
+import numpy as np
+
+# Load pre-trained OpenPose model
+net = cv2.dnn.readNetFromTensorflow("pose/pose_model.pb")
+
+# Load human pose coco dataset
+with open("pose/coco.names", "r") as f:
+    classes = [line.strip() for line in f.readlines()]
+
+# Set input size and scale factor
+input_width = 368
+input_height = 368
+scale_factor = 0.00392
+
+# Open video file
+video = cv2.VideoCapture("a.mp4")
+
+while True:
+    # Read the next frame from the video
+    ret, frame = video.read()
+    if not ret:
+        break
+
+    # Preprocess the frame
+    blob = cv2.dnn.blobFromImage(frame, scale_factor, (input_width, input_height), (0, 0, 0), swapRB=True, crop=False)
+
+    # Set input to the network
+    net.setInput(blob)
+
+    # Forward pass through the network
+    output = net.forward()
+
+    # Get the dimensions of the frame
+    frame_height, frame_width, _ = frame.shape
+
+    # Iterate over detected keypoints
+    for i in range(len(classes)):
+        # Extract confidence and keypoint location
+        confidence_map = output[0, i, :, :]
+        x_coords = output[0, i + 17, :, :]
+        y_coords = output[0, i + 34, :, :]
+
+        # Find keypoints above confidence threshold
+        _, confidence, _, point = cv2.minMaxLoc(confidence_map)
+        x = int(frame_width * point[0] / input_width)
+        y = int(frame_height * point[1] / input_height)
+
+        # Draw keypoints on the frame
+        if confidence > 0.1:
+            cv2.circle(frame, (x, y), 3, (0, 255, 0), -1)
+            cv2.putText(frame, classes[i], (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+
+    # Display the frame
+    cv2.imshow("Video", frame)
+
+    # Exit if 'q' is pressed
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+# Release the video capture and close the windows
+video.release()
+cv2.destroyAllWindows()
